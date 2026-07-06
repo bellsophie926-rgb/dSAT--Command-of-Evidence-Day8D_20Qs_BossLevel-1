@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alina's dSAT - Inferences (Day 8-D 20Qs Ultimate Boss Level)</title>
+    <style>
+        :root {
+            --bluebook-dark: #1e1e1e;
+            --bluebook-header: #f2f2f2;
+            --bluebook-border: #d2d2d2;
+            --bluebook-blue: #0077c8;
+            --bluebook-light-bg: #fafafa;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bluebook-dark); display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .app-container { width: 96vw; height: 92vh; background-color: #fff; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3); position: relative; }
+        
+        header { background-color: var(--bluebook-header); padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--bluebook-border); font-weight: 600; color: #333; }
+        .timer { font-family: monospace; font-size: 1.25em; background: #e0e0e0; padding: 6px 14px; border-radius: 4px; font-weight: bold; transition: background-color 0.3s; }
+        .timer.urgent { background: var(--danger); color: white; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
+        .teacher-link { font-size: 0.85em; color: #777; cursor: pointer; text-decoration: underline; margin-left: 15px; }
+        .teacher-link:hover { color: var(--bluebook-blue); }
+
+        .view-section { display: none; flex: 1; overflow: hidden; }
+        .view-section.active { display: flex; }
+        
+        .split-screen { flex: 1; width: 100%; display: flex;}
+        .left-panel { flex: 1.1; padding: 40px; border-right: 2px solid var(--bluebook-border); overflow-y: auto; background-color: var(--bluebook-light-bg); }
+        .passage { font-family: Georgia, serif; font-size: 1.25em; line-height: 1.85; color: #222; }
+        .right-panel { flex: 0.9; padding: 40px; overflow-y: auto; display: flex; flex-direction: column; }
+        .question-text { font-size: 1.15em; font-weight: bold; margin-bottom: 25px; color: #222; }
+        
+        .options-list { list-style: none; display: flex; flex-direction: column; gap: 14px; margin-bottom: 30px; }
+        .option-item { border: 1px solid var(--bluebook-border); border-radius: 6px; padding: 14px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: flex-start; }
+        .option-item:hover { background-color: #f0f8ff; border-color: var(--bluebook-blue); }
+        .option-item.selected { background-color: #e6f3ff; border: 2px solid var(--bluebook-blue); box-shadow: 0 0 0 1px var(--bluebook-blue); }
+        .letter-circle { width: 28px; height: 28px; border-radius: 50%; border: 1px solid #777; display: flex; justify-content: center; align-items: center; font-weight: bold; margin-right: 15px; flex-shrink: 0; }
+        .option-item.selected .letter-circle { background-color: var(--bluebook-blue); color: white; border-color: var(--bluebook-blue); }
+        .option-content { font-size: 1.02em; line-height: 1.5; color: #333; }
+        
+        .controls { display: flex; justify-content: space-between; margin-top: auto; }
+        button { padding: 10px 25px; font-size: 1em; font-weight: 600; border: none; border-radius: 20px; cursor: pointer; transition: 0.2s; }
+        .btn-submit { background-color: var(--bluebook-blue); color: white; }
+        .btn-submit:hover { background-color: #005f9e; }
+        .btn-next { background-color: #333; color: white; display: none; }
+        .btn-next:hover { background-color: #000; }
+        
+        .feedback { display: none; margin-top: 20px; padding: 18px; border-radius: 6px; font-size: 1em; line-height: 1.6; }
+        .feedback.correct { background-color: #d4edda; border-left: 5px solid var(--success); }
+        .feedback.incorrect { background-color: #f8d7da; border-left: 5px solid var(--danger); }
+        .pathology { margin-top: 10px; background: rgba(255,255,255,0.85); padding: 12px; border-radius: 4px; font-size: 0.95em; }
+        
+        .progress-bar { height: 4px; background: var(--bluebook-border); width: 100%;}
+        .progress-fill { height: 100%; background: var(--bluebook-blue); width: 0%; transition: width 0.3s; }
+
+        .center-view { flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 40px; width: 100%; overflow-y: auto; }
+        .code-box { background: #f4f4f4; border: 1px solid #ccc; padding: 15px; margin: 20px 0; border-radius: 5px; word-break: break-all; font-family: monospace; font-size: 1.05em; user-select: all; max-width: 650px;}
+        
+        .teacher-container { width: 92%; max-width: 1050px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; padding-bottom: 50px; }
+        textarea { width: 100%; height: 90px; padding: 10px; font-family: monospace; border-radius: 5px; border: 1px solid #ccc; }
+        .attempt-block { background: #fff; border: 2px solid var(--bluebook-border); border-radius: 8px; margin-bottom: 30px; overflow: hidden; }
+        .attempt-header { background: #e8f4f8; padding: 15px 20px; border-bottom: 2px solid var(--bluebook-border); display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1em; }
+        .attempt-header.suspect { background: #fff3cd; color: #856404; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid var(--bluebook-border); padding: 10px; text-align: left; font-size: 0.92em; }
+        th { background-color: var(--bluebook-header); }
+        .pass { color: var(--success); font-weight: bold; }
+        .fail { color: var(--danger); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+    <header>
+        <div id="q-counter">Question 1 of 20</div>
+        <div>
+            Day 8-D: Inferences (20Qs Academic Deep-Water Boss Level)
+            <span class="teacher-link" onclick="openTeacherPortal()">[Teacher Portal]</span>
+        </div>
+        <div class="timer" id="timer-display">23:20</div>
+    </header>
+    
+    <div class="view-section active" id="quiz-view">
+        <div class="split-screen">
+            <div class="left-panel">
+                <div class="passage" id="passage-text">Loading passage...</div>
+            </div>
+            <div class="right-panel">
+                <div class="question-text" id="question-text">Which choice most logically completes the text?</div>
+                
+                <ul class="options-list" id="options-list"></ul>
+                
+                <div class="controls">
+                    <button class="btn-submit" id="submit-btn" onclick="checkAnswer()">Next</button>
+                    <button class="btn-next" id="next-btn" onclick="nextQuestion()">Continue ➡️</button>
+                    <button class="btn-submit" id="finish-btn" onclick="finishTest()" style="display:none; background-color: var(--success);">Generate Report</button>
+                </div>
+                
+                <div class="feedback" id="feedback-box"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="view-section center-view" id="completion-view">
+        <h2 id="end-title">🏆 20Qs Boss Level Complete!</h2>
+        <p style="margin-top: 15px; font-size: 1.1em;" id="end-msg">Copy the secure Base64 code below for your teacher's portal.</p>
+        <div class="code-box" id="submission-code">Generating code...</div>
+        <button class="btn-submit" onclick="copyCode()">Copy Code</button>
+    </div>
+
+    <div class="view-section center-view" id="teacher-view" style="align-items: flex-start; text-align: left;">
+        <div class="teacher-container">
+            <h2>👨‍🏫 Teacher Portal: Distractor Pathology Analytics</h2>
+            <p>Paste Alina's submission code below to decode her pacing and radar accuracy.</p>
+            <div style="display: flex; gap: 10px;">
+                <textarea id="teacher-code-input" placeholder="Paste Base64 code here..."></textarea>
+            </div>
+            <div style="margin-top: 10px;">
+                <button class="btn-submit" onclick="decodeData()">Decode Report</button>
+                <button class="btn-next" style="display:inline-block; margin-left: 10px;" onclick="returnToQuiz()">Back to Quiz</button>
+                <button class="btn-next" style="display:inline-block; margin-left: 10px; background-color: #dc3545;" onclick="clearStudentHistory()">Clear All Local History</button>
+            </div>
+            
+            <div id="teacher-dashboard" style="display:none; width: 100%; margin-top: 20px;">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        { passage: "Biochemical researchers studying *Haloferax volcanii*, an extremophilic archaeon adapted to hypersaline environments, observed that its intracellular proteome contains an exceptionally high density of acidic amino acid residues compared to mesophilic organisms. Molecular dynamics simulations confirm that in low-salt conditions, electrostatic repulsion among these negative charges destabilizes tertiary protein folding. However, in environments saturated with potassium ions, these charges are shielded, allowing proper folding. This mechanism implies that ______", options: ["*H. volcanii* will inevitably evolve mechanisms to synthesize alkaline proteins to survive in freshwater ecosystems.", "the structural stability of *H. volcanii* proteins is fundamentally dependent on high intracellular cation concentrations.", "acidic amino acid residues guarantee permanent enzymatic activity across all thermal and osmotic conditions.", "mesophilic organisms possess proteins that are objectively superior in structural efficiency to extremophilic proteins."], correct: 1, pathology: "<b>Kill Radar:</b><br>(A) <code>will inevitably evolve</code> (极端未来预言)<br>(C) <code>guarantee permanent... across all</code> (极端承诺词)<br>(D) <code>objectively superior</code> (主观选美审判)<br><b>逻辑归纳 (B):</b> 严谨保守表达：因为钾离子屏蔽负电荷才能折叠(+) ➡️ 蛋白质稳定性依赖高阳离子浓度。" },
+        { passage: "Sedimentologists evaluating isotopic fractionation in deep-marine carbonates from the Neoproterozoic era noted an *anomalous* global drop in carbon-13 values directly underlying glacial diamictite layers. Traditional geochemical models interpret such negative carbon anomalies as the result of a sudden collapse of primary ocean productivity. However, recent pore-fluid modeling demonstrates that diagenetic alteration mediated by meteoric groundwater can replicate these exact carbon-13 depletion signatures in purely abiotic environments. This confirms that ______", options: ["negative carbon-13 anomalies do not necessarily constitute definitive evidence of biological mass extinction events.", "geochemists deliberately manipulated ancient carbonate samples to intentionally fabricate historical mass extinction scenarios.", "meteoric groundwater infiltration guarantees the complete destruction of all Precambrian geological records.", "primary ocean productivity remained absolutely constant throughout the entire Neoproterozoic era."], correct: 0, pathology: "<b>Kill Radar:</b><br>(B) <code>deliberately manipulated... intentionally fabricate</code> (学术诈骗阴谋论)<br>(C) <code>guarantees the complete destruction of all</code> (绝对化消灭词)<br>(D) <code>absolutely constant throughout the entire</code> (极度绝对词)<br><b>逻辑归纳 (A):</b> 既然物理地下水也能造出相同的碳负异常 ➡️ 这种碳异常不能百分之百证明绝对发生了生物大灭绝。" },
+        { passage: "Neurobiologists investigating synaptic plasticity in hippocampal CA1 pyramidal neurons discovered that high-frequency stimulation induces long-term potentiation (LTP) only when postsynaptic N-methyl-D-aspartate (NMDA) receptors are actively bound by both glutamate and glycine. If an experimental antagonist selectively binds to the glycine modulation site, intracellular calcium influx is strictly *precluded* even when physiological concentrations of glutamate are introduced. This observation corroborates that ______", options: ["glutamate alone is insufficient to trigger NMDA receptor-mediated calcium influx in hippocampal CA1 neurons.", "NMDA receptor antagonists will guarantee the permanent prevention of neurological disorders like epilepsy.", "synaptic plasticity in pyramidal neurons is entirely uninfluenced by neurotransmitters other than glutamate.", "hippocampal CA1 neurons will eventually mutate to bypass NMDA receptor dependency entirely."], correct: 0, pathology: "<b>Kill Radar:</b><br>(B) <code>guarantee the permanent prevention</code> (绝对化医疗承诺)<br>(C) <code>entirely uninfluenced by... other than</code> (绝对化否定)<br>(D) <code>will eventually mutate to bypass</code> (未来科幻预测)<br><b>逻辑归纳 (A):</b> 结合两步必须生效，阻滞其中一个就失败 ➡️ 光有谷氨酸一个是不够的。" },
+        { passage: "In Pleistocene paleoanthropology, the 'overkill hypothesis' posits that the sudden extinction of North American megafauna coincided precisely with the proliferation of Clovis hunter-gatherers. However, stratigraphic isotopic analyses of *Mammuthus primigenius* tusks reveal severe nutritional stress and demographic contraction occurring nearly 3,000 years prior to the earliest confirmed radiocarbon dating of human artifacts in the region. These findings substantiate that ______", options: ["human hunting activity could not have been the sole catalyst driving the initial decline of North American megafauna.", "Clovis hunter-gatherers intentionally fabricated radiocarbon evidence to conceal their overhunting practices.", "climate change is universally the single mechanism responsible for every Pleistocene extinction event.", "mammoth populations would have inevitably multiplied infinitely if Clovis hunters had never arrived."], correct: 0, pathology: "<b>Kill Radar:</b><br>(B) <code>intentionally fabricated... conceal</code> (远古猎人学术造假阴谋论)<br>(C) <code>universally the single... every</code> (全称量词帽子)<br>(D) <code>inevitably multiplied infinitely</code> (违背常识的无限繁殖未来)<br><b>逻辑归纳 (A):</b> 灭绝前3000年已衰退 ➡️ 人类捕猎绝对不可能是引发衰退的唯一因素。" },
+        { passage: "Philosopher Ludwig Wittgenstein’s *Tractatus Logico-Philosophicus* asserted that the logical structure of language places an absolute boundary on what can be meaningfully expressed. In his later work, *Philosophical Investigations*, however, Wittgenstein *repudiated* this rigid formalism, arguing that language functions as a fluid collection of socially embedded 'language games' where word meanings are dynamically governed by public usage context. This philosophical shift suggests that the later Wittgenstein believed ______", options: ["the semantic meaning of a word is not an immutable property fixed strictly by formal logic.", "formal logic is an inherently malicious doctrine designed to suppress human intellectual freedom.", "societal consensus can guarantee that verbal miscommunication will never occur among speakers.", "all philosophical treatises written prior to *Philosophical Investigations* are entirely devoid of merit."], correct: 0, pathology: "<b>Kill Radar:</b><br>(B) <code>inherently malicious doctrine... suppress</code> (情绪化主观指责)<br>(C) <code>guarantee... will never occur</code> (绝对无沟通障碍预言)<br>(D) <code>all... entirely devoid of merit</code> (全盘抹杀极端词)<br><b>逻辑归纳 (A):</b> 驳斥早期静态死逻辑 ➡️ 说明单词语义不是被形式逻辑固定死的属性。" },
+        { passage: "Entomologists tracking the evolutionary arms race between echolocating insectivorous bats and nocturnal arctiid moths discovered that certain moth species produce high-frequency ultrasonic clicks in response to bat sonar approaches. While early hypothesis posited that these clicks merely warned bats of the moths' chemical toxicity, acoustic laboratory trials confirm that the clicks disrupt the temporal processing of bat neural auditory circuitry, actively jamming target-lock precision. Consequently, researchers infer that ______", options: ["the moths' ultrasonic defense mechanism functions as more than just a passive warning signal.", "arctiid moths will eventually evolve specialized organs to emit lethal electromagnetic radiation against bats.", "echolocating bats are fundamentally incapable of adapting their sonar frequencies to overcome acoustic interference.", "chemical toxicity plays absolutely no evolutionary role in the survival strategy of any arctiid moth."], correct: 0, pathology: "<b>Kill Radar:</b><br>(B) <code>will eventually evolve... lethal electromagnetic</code> (科幻脑补未来)<br>(C) <code>fundamentally incapable of adapting</code> (绝对无能化论断)<br>(D) <code>absolutely no... any</code> (绝对化一刀切否定)<br><b>逻辑归纳 (A):</b> 既能干扰声纳神经计算 ➡️ 说明超声波不仅仅是一个被动的警告信号。" },
+        { passage: "In macroeconomics, the Phillips curve historically modeled an inverse short-run relationship between a nation's inflation rate and its unemployment rate. During the 1970s stagflation crisis, however, Western economies simultaneously experienced rampant double-digit inflation and soaring unemployment rates. Economists subsequently *repudiated* the static model by integrating Milton Friedman's expectations-augmented theory, which posits that when workers anticipate ongoing inflation, wage demands adjust upward precipitously, neutralizing short-term trade-offs. This evolution illustrates that ______", options: ["macroeconomic models based on empirical observation must be dynamically updated when confronted with anomalous real-world data.", "central banks secretly conspired with corporate monopolies to intentionally trigger the 1970s stagflation crisis.", "the relationship between inflation and unemployment will inevitably remain strictly static across all future centuries.", "Milton Friedman's theories guarantee the complete elimination of unemployment in modern capitalistic markets."], correct: 0, pathology: "<b>Kill Radar:</b><br>(B) <code>secretly conspired... intentionally trigger</code> (金融阴谋论)<br>(C) <code>will inevitably remain strictly static across all</code> (绝对未来静止)<br>(D) <code>guarantee the complete elimination</code> (极端学术夸大)<br><b>逻辑归纳 (A):</b> 旧理论遇到反常数据（滞涨）被修正 ➡️ 经济模型面对反常数据时需要被动态更新。" },
+        { passage: "Epidemiologists analyzing the transmission dynamics of *Mycobacterium tuberculosis* within densely populated urban settlements observed that while transmission rates correlate strongly with indoor aerosol concentration levels, the subsequent progression from latent infection to active pulmonary tuberculosis displays extreme variance. Genomic sequencing reveals that individuals carrying specific loss-of-function polymorphisms in the IL-12/IFN-gamma cytokine pathway exhibit a 15-fold increased susceptibility to active disease progression following exposure. This implies that ______", options: ["active pulmonary disease progression depends on host immunogenetic architecture as well as environmental exposure.", "indoor aerosol reduction policies are completely ineffective at mitigating the overall spread of tuberculosis.", "individuals carrying normal cytokine pathway genes are strictly guaranteed lifetime immunity against tuberculosis.", "the IL-12/IFN-gamma cytokine pathway will inevitably mutate to eliminate all respiratory pathogens from human populations."], correct: 0, pathology: "<b>Kill Radar:</b><br>(B) <code>completely ineffective</code> (极左彻底否定)<br>(C) <code>strictly guaranteed lifetime immunity</code> (绝对终身免疫承诺)<br>(D) <code>will inevitably mutate to eliminate all</code> (未来绝对进化论)<br><b>逻辑归纳 (A):</b> 感染看环境气溶胶，发病看宿主基因缺陷 ➡️ 疾病恶化由宿主基因与环境共同决定。" },
+        { passage: "In comparative historical linguistics, Glottochronology attempts to calculate the chronological divergence of related languages by measuring the lexicostatistical retention rate of basic vocabulary over time, assuming a constant rate of lexical decay. However, contact linguists analyzing the Anglo-Norman influence on Middle English documented a massive, accelerated replacement of core Anglo-Saxon lexicon within a brief 200-year window, driven by intense sociopolitical stratification. This indicates that ______", options: ["the assumption of a universal, uniform rate of vocabulary decay across all historical languages is flawed.", "Middle English is an inherently inferior dialect that lacked the vocabulary required for governance.", "Glottochronology represents an intentional academic fraud designed to mislead historical linguists.", "languages subjected to foreign invasion will inevitably lose 100% of their original native grammatical structures."], correct: 0, pathology: "<b>Kill Radar:</b><br>(B) <code>inherently inferior dialect</code> (主观语言优劣鄙视)<br>(C) <code>intentional academic fraud</code> (学术欺诈阴谋论)<br>(D) <code>will inevitably lose 100%</code> (极端比例预言)<br><b>逻辑归纳 (A):</b> 本以为退化恒速，其实动荡会让替换加速 ➡️ 说明假设“所有语言词汇退化速度都恒定”是有缺陷的。" },
+        { passage: "Astrophysicists utilizing gravitational microlensing to detect rogue exoplanets—planetary bodies ejected from their host stellar systems that drift freely through interstellar space—must observe fleeting perturbations in background starlight. When a dark, rogue planet passes precisely between Earth and a distant background star, its gravitational field bends the starlight, creating a characteristic magnification curve. Because rogue planets emit zero electromagnetic radiation themselves, astronomers conclude that ______", options: ["gravitational microlensing provides a viable mechanism to infer the presence of non-luminous celestial bodies.", "rogue exoplanets are deliberately cloaking their thermal emissions to evade astronomical detection.", "all planetary bodies ejected from stellar systems will eventually collide with Earth's solar system.", "telescopes detecting electromagnetic radiation are fundamentally useless for all modern astrophysical observations."], correct: 0, pathology: "<b>Kill Radar:</b><br>(B) <code>deliberately cloaking... evade</code> (拟人化主观阴谋)<br>(C) <code>all... will eventually collide</code> (灾难式末日预言)<br>(D) <code>fundamentally useless for all modern</code> (绝对无用化全杀)<br><b>逻辑归纳 (A):</b> 暗星不发光但能靠折射光线被抓到 ➡️ 微透镜是检测不发光天体的可行机制。" },
+        { passage: "Cognitive psychologists studying developmental syntax acquisition in pre-verbal infants designed an artificial grammar habituation paradigm. Infants aged eight months were exposed to continuous auditory streams of nonsense syllables structured by strict transitional probabilities. Subsequent head-turn preference testing showed that infants listened significantly longer to sequences violating these transitional rules. This empirical outcome suggests that ______", options: ["pre-verbal infants possess statistical learning mechanisms that track sequential probabilities in speech.", "infants aged eight months are consciously capable of articulating complex grammatical syntax rules.", "auditory exposure to artificial grammar guarantees that an infant will achieve superior adult IQ scores.", "human infants will inevitably lose their ability to learn native languages if exposed to nonsense syllables."], correct: 0, pathology: "<b>Kill Radar:</b><br>(B) <code>consciously capable of articulating</code> (过度脑补，婴儿不可能阐述规律)<br>(C) <code>guarantees... superior adult IQ</code> (绝对智商保障承诺)<br>(D) <code>will inevitably lose their ability</code> (荒谬灾难预测)<br><b>逻辑归纳 (A):</b> 听出违反统计规律的组合 ➡️ 证明婴儿拥有追踪语言统计概率的认知学习能力。" },
+        { passage: "Climatologists examining benthic foraminifera shell chemistry from marine sediment cores utilize the ratio of magnesium to calcium (Mg/Ca) as a paleothermometer to reconstruct ancient deep-ocean water temperatures. The underlying premise asserts that foraminifera incorporate magnesium into their calcium carbonate shells at higher rates when calcifying in warmer waters. However, recent laboratory calibrations reveal that carbonate ion saturation state also exerts an independent, non-linear control over Mg/Ca incorporation ratios. Consequently, paleoclimatologists must ______", options: ["account for potential variations in ancient carbonate ion saturation states to ensure temperature accuracy.", "conclude that foraminifera shell chemistry provides zero reliable insights into historical ocean environments.", "assume that global marine ocean temperatures have remained strictly static throughout geological history.", "immediately discard all deep-ocean sediment core research published prior to the twenty-first century."], correct: 0, pathology: "<b>Kill Radar:</b><br>(B) <code>provides zero reliable insights</code> (极端彻底推翻)<br>(C) <code>remained strictly static throughout</code> (绝对化历史静止)<br>(D) <code>immediately discard all... published prior</code> (暴躁越界操作)<br><b>逻辑归纳 (A):</b> 除了温度还受碳酸根离子影响 ➡️ 用它算温度时必须将这个额外干扰项考虑进去。" },
+        { passage: "In evolutionary biology, Hamilton’s rule ($rB > C$) articulates the quantitative threshold for the evolution of altruistic behaviors via kin selection, asserting that an altruistic trait will spread if the fitness benefit to the recipient ($B$), weighted by genetic relatedness ($r$), exceeds the direct reproductive cost ($C$) paid by the actor. Among social Hymenoptera (ants/bees), haplodiploid sex determination results in full sisters sharing 75% of their genes ($r = 0.75$), compared to only 50% with their own offspring ($r = 0.50$). This unique genetic asymmetry ______", options: ["provides a quantitative explanation for why female Hymenoptera frequently forgo direct reproduction to rear sisters.", "proves that worker bees possess an innate moral consciousness and ethical commitment to their queen.", "guarantees that haplodiploid species will never experience internal colony conflict over reproduction.", "demonstrates that altruistic behaviors are fundamentally impossible to evolve in standard diploid species."], correct: 0, pathology: "<b>Kill Radar:</b><br>(B) <code>innate moral consciousness and ethical commitment</code> (动物主观伦理拟人化)<br>(C) <code>guarantees... will never experience</code> (绝对无冲突承诺)<br>(D) <code>fundamentally impossible to evolve in</code> (绝对化范围外推)<br><b>逻辑归纳 (A):</b> 养姐妹比养孩子基因回报更高 ➡️ 定量解释了为什么工蜂倾向于放弃生育抚养姐妹。" },
+        { passage: "Historians analyzing the structural resilience of Byzantine Constantinople's Theodosian Walls note that the fortification withstood siege weaponry for nearly a millennium prior to 1453. Architectural assessments reveal that instead of utilizing rigid, solid ashlar masonry, the builders interspersed horizontal bands of Roman brick within the limestone core. Dynamic stress modeling confirms that these brick bands acted as energy-dissipating expansion joints, absorbing seismic shockwaves and *mitigating* the kinetic impact of projectile bombardment. This implies that ______", options: ["the incorporation of flexible material bands enhanced the overall structural durability of the masonry walls.", "Byzantine engineers possessed secret, supernatural construction techniques unknown to modern physics.", "solid ashlar masonry walls will inevitably collapse within ten years of their initial construction.", "the Ottoman conquest of Constantinople in 1453 was facilitated by treasonous Byzantine architects."], correct: 0, pathology: "<b>Kill Radar:</b><br>(B) <code>secret, supernatural construction techniques</code> (怪力乱神神化阴谋)<br>(C) <code>will inevitably collapse within ten years</code> (十年必塌极度预言)<br>(D) <code>treasonous Byzantine architects</code> (历史戏说阴谋论)<br><b>逻辑归纳 (A):</b> 夹红砖缓冲震动抗击打 ➡️ 掺入弹性材料带提升了城墙结构整体耐久度。" },
+        { passage: "When quantum physicists conduct Bell inequality tests to evaluate whether quantum mechanics requires local realism, they repeatedly observe correlations between entangled photon pairs that violate Bell's limit. Classical local hidden-variable theories postulate that pre-existing, local deterministic properties dictate measurement outcomes. However, the consistent experimental violation of Bell inequalities across independent laboratories *corroborates* that the quantum entanglement correlations cannot be explained by any local hidden variables. Therefore, physicists infer that ______", options: ["local realism alone is insufficient to describe the physical behavior of quantum entangled particle systems.", "experimenters conducting Bell inequality tests systematically manipulated data to deliberately manufacture anomalies.", "entangled photons possess a conscious, telepathic superiority over classical subatomic particles.", "quantum computing devices will guarantee the complete eradication of all global data encryption protocols."], correct: 0, pathology: "<b>Kill Radar:</b><br>(B) <code>systematically manipulated data to deliberately manufacture</code> (物理界集体造假阴谋论)<br>(C) <code>conscious, telepathic superiority</code> (主观意识拟人化)<br>(D) <code>guarantee the complete eradication of all</code> (科幻式绝对技术毁灭)<br><b>逻辑归纳 (A):</b> 实验证明本地定域隐变量无法解释纠缠 ➡️ 仅靠定域实在论不足以描述量子纠缠粒子的行为。" },
+        { passage: "During the 19th century, physician Ignaz Semmelweis was *vilified* by his peers for his hypothesis that doctors were transferring 'cadaverous particles' from the morgue to the maternity ward, causing high maternal mortality. His insistence on handwashing was dismissed as archaic superstition. Decades later, Louis Pasteur’s germ theory scientifically proved that invisible microbes were indeed the vectors of infection, completely *vindicating* Semmelweis. This episode illustrates that ______", options: ["prevailing scientific paradigms can blind an academic community to the validity of a highly prescient observation.", "19th-century doctors conspired to deliberately murder their maternal patients out of sheer malice.", "Louis Pasteur was morally superior to every other medical scientist living in Europe at the time.", "handwashing guarantees permanent immunity against all known bacterial and viral mutations."], correct: 0, pathology: "<b>Kill Radar:</b><br>(B) <code>conspired to deliberately murder... sheer malice</code> (蓄意谋杀阴谋论)<br>(C) <code>morally superior to every other</code> (全量选美与道德判定)<br>(D) <code>guarantees permanent immunity against all</code> (绝对永恒免疫)<br><b>逻辑归纳 (A):</b> 固执旧理论攻击超前真理 ➡️ 说明主流学术范式有时会阻碍科学界接纳具有先见之明的观察。" },
+        { passage: "Economists studying consumer habits note that 'fast fashion' brands typically produce inexpensive clothing that deteriorates after only a few washes. Despite knowing the poor quality, many consumers continuously purchase from these brands because the initial price point is extremely low. However, over the course of five years, a consumer buying fast fashion will spend more money replacing worn-out garments than a consumer who buys a single, high-quality, expensive garment that lasts a decade. This illustrates that ______", options: ["the long-term financial cost of purchasing low-quality items can exceed the cost of investing in durable goods.", "fast fashion executives are engaged in an illegal corporate conspiracy to defraud the global public.", "consumers who purchase fast fashion are inherently incompetent and desire to waste their earnings.", "governments must immediately ban all clothing manufacturing that fails to meet strict durability benchmarks."], correct: 0, pathology: "<b>Kill Radar:</b><br>(B) <code>illegal corporate conspiracy to defraud</code> (跨国企业诈骗阴谋论)<br>(C) <code>inherently incompetent and desire to waste</code> (对消费者主观辱骂)<br>(D) <code>must immediately ban all... strict</code> (极端暴躁干涉对策)<br><b>逻辑归纳 (A):</b> 频繁低价替换总和大于单次买高价 ➡️ 购买劣质快时尚的长期财务成本可能会超过投资耐用品。" },
+        { passage: "Botanists studying understory ferns in dense tropical rain forests noted their ability to thrive in extremely low-light environments. While upper-canopy trees possess high concentrations of chlorophyll *a*, which efficiently absorbs the abundant red and blue light wavelengths, the understory ferns possess disproportionately high concentrations of chlorophyll *b*. Measurements confirm that the only light reaching the forest floor is low-energy green and yellow wavelengths. This implies that ______", options: ["chlorophyll *b* is likely more efficient at absorbing the specific light wavelengths available on the forest floor.", "upper-canopy trees maliciously steal red and blue light to ruthlessly starve the forest floor.", "chlorophyll *b* is aesthetically a much more attractive pigment than chlorophyll *a*.", "understory ferns will inevitably evolve to grow taller than the upper-canopy trees within a decade."], correct: 0, pathology: "<b>Kill Radar:</b><br>(B) <code>maliciously steal... ruthlessly starve</code> (自然界植物主观拟人恶意)<br>(C) <code>aesthetically a much more attractive pigment</code> (主观视觉选美)<br>(D) <code>will inevitably evolve to grow taller</code> (极限进化未来预言)<br><b>逻辑归纳 (A):</b> 树下只有黄绿光，下层蕨类富含b活得好 ➡️ 叶绿素b对森林底层可用的黄绿光具有更高的吸收效率。" },
+        { passage: "Linguists examining the decline of the Cornish language in the 18th century note that it was primarily spoken by rural fishermen and miners in Cornwall. When the English government mandated that English be the sole language of instruction in all state schools and the official language of commerce, fluency in English became a prerequisite for economic advancement. As younger generations entered the workforce, they predominantly adopted English. The decline of Cornish indicates that ______", options: ["language survival is heavily influenced by its perceived utility for economic and social mobility.", "Cornish was an inherently inferior language that lacked the intellectual capacity for commerce.", "the English government enacted a secretive and evil plot to psychologically torture Cornish miners.", "the Cornish language will inevitably vanish from human memory without leaving a single written trace."], correct: 0, pathology: "<b>Kill Radar:</b><br>(B) <code>inherently inferior language</code> (主观语言低劣评价)<br>(C) <code>secretive and evil plot... psychologically torture</code> (恶意精神折磨阴谋)<br>(D) <code>will inevitably vanish... single trace</code> (极端化一刀切消失)<br><b>逻辑归纳 (A):</b> 讲英语能赚钱升迁，年轻人改说英语 ➡️ 一门语言的存续极大程度取决于它的社会经济实用价值。" },
+        { passage: "Paleontologists recently excavated a remarkably well-preserved fossil of an *anomalous* theropod dinosaur, *C. zhaoianus*. The fossil exhibits distinct impressions of complex, asymmetrical feathers along its forelimbs, a feature modern biologists associate exclusively with aerodynamic flight. However, biomechanical analysis of the dinosaur's dense skeletal structure and heavy cranium proves definitively that the creature was far too massive to achieve airborne lift. These conflicting findings suggest that ______", options: ["the complex feathers on this species likely evolved to serve an evolutionary function other than flight.", "the research team deliberately forged the feather impressions to fraudulently secure research funding.", "this specific theropod was objectively the most magnificent creature to exist during the Cretaceous period.", "all dinosaur species possessing feathers will eventually be proven entirely incapable of flight."], correct: 0, pathology: "<b>Kill Radar:</b><br>(B) <code>deliberately forged... fraudulently secure</code> (科研造假骗经费阴谋论)<br>(C) <code>objectively the most magnificent creature</code> (极端选美主观吹嘘)<br>(D) <code>all... will eventually be proven entirely</code> (全量一刀切未来断言)<br><b>逻辑归纳 (A):</b> 有羽毛但体重超载飞不起来 ➡️ 这些复杂羽毛最初演化出来很可能是为了飞行以外的其他功能（如保暖求偶）。" }
+    ];
+
+    let currentQ = 0;
+    let selectedOptionIndex = null;
+    let questionStartTime = 0;
+    let currentAttemptData = []; 
+    
+    let attemptHistory = JSON.parse(localStorage.getItem('alina_day8d_history')) || [];
+    let currentAttemptNum = attemptHistory.length + 1;
+
+    let timeLeft = 1400; // Exactly 23 mins 20 secs (70s per question pace limit)
+    let timerInterval;
+
+    const views = document.querySelectorAll('.view-section');
+    const passageEl = document.getElementById('passage-text');
+    const optionsListEl = document.getElementById('options-list');
+    const qCounterEl = document.getElementById('q-counter');
+    const progressFill = document.getElementById('progress');
+    const submitBtn = document.getElementById('submit-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const finishBtn = document.getElementById('finish-btn');
+    const feedbackBox = document.getElementById('feedback-box');
+    const timerDisplay = document.getElementById('timer-display');
+    const letters = ['A', 'B', 'C', 'D'];
+
+    function formatTime(seconds) {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
+    function startTimer() {
+        timerDisplay.innerText = formatTime(timeLeft);
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            timerDisplay.innerText = formatTime(timeLeft);
+            if(timeLeft <= 180) timerDisplay.classList.add('urgent');
+            if(timeLeft <= 0) {
+                clearInterval(timerInterval);
+                forceSubmitTest();
+            }
+        }, 1000);
+    }
+
+    function switchView(viewId) {
+        views.forEach(v => v.classList.remove('active'));
+        document.getElementById(viewId).classList.add('active');
+    }
+
+    function loadQuestion(index) {
+        if(index >= questions.length) return finishTest();
+
+        const q = questions[index];
+        passageEl.innerHTML = q.passage;
+        qCounterEl.innerText = `Question ${index + 1} of ${questions.length} (Target Pace: <70s)`;
+        progressFill.style.width = `${((index) / questions.length) * 100}%`;
+        
+        selectedOptionIndex = null;
+        feedbackBox.style.display = 'none';
+        submitBtn.style.display = 'block';
+        nextBtn.style.display = 'none';
+        finishBtn.style.display = 'none';
+
+        questionStartTime = Date.now();
+
+        optionsListEl.innerHTML = '';
+        q.options.forEach((optText, i) => {
+            const li = document.createElement('li');
+            li.className = 'option-item';
+            li.onclick = () => selectOption(i);
+            li.innerHTML = `<div class="letter-circle">${letters[i]}</div><div class="option-content">${optText}</div>`;
+            optionsListEl.appendChild(li);
+        });
+    }
+
+    function selectOption(index) {
+        if(submitBtn.style.display === 'none') return;
+        selectedOptionIndex = index;
+        const items = document.querySelectorAll('.option-item');
+        items.forEach(item => item.classList.remove('selected'));
+        items[index].classList.add('selected');
+    }
+
+    function checkAnswer() {
+        if (selectedOptionIndex === null) {
+            alert("Please select an option to proceed.");
+            return;
+        }
+
+        const timeTakenSeconds = Math.round((Date.now() - questionStartTime) / 1000);
+        const isCorrect = (selectedOptionIndex === questions[currentQ].correct);
+
+        currentAttemptData.push({
+            qNum: currentQ + 1,
+            answer: letters[selectedOptionIndex],
+            status: isCorrect ? "PASS" : "FAIL",
+            time: timeTakenSeconds
+        });
+
+        submitBtn.style.display = 'none';
+        
+        if (currentQ < questions.length - 1) {
+            nextBtn.style.display = 'block';
+        } else {
+            finishBtn.style.display = 'block';
+            progressFill.style.width = '100%';
+            clearInterval(timerInterval); 
+        }
+        
+        feedbackBox.style.display = 'block';
+        if (isCorrect) {
+            feedbackBox.className = 'feedback correct';
+            feedbackBox.innerHTML = `<strong>✅ RADAR PASS! Correct Answer.</strong><br><div class="pathology">${questions[currentQ].pathology}</div>`;
+        } else {
+            feedbackBox.className = 'feedback incorrect';
+            feedbackBox.innerHTML = `<strong>❌ TRAPPED BY DISTRACTOR.</strong> Correct Answer is <b>${letters[questions[currentQ].correct]}</b>.<br><div class="pathology">${questions[currentQ].pathology}</div>`;
+        }
+    }
+
+    function nextQuestion() {
+        currentQ++;
+        loadQuestion(currentQ);
+    }
+
+    function saveAndGenerateCode() {
+        const sessionRecord = {
+            attemptNum: currentAttemptNum,
+            timestamp: new Date().toLocaleString(),
+            data: currentAttemptData
+        };
+        
+        attemptHistory.push(sessionRecord);
+        localStorage.setItem('alina_day8d_history', JSON.stringify(attemptHistory));
+        
+        const rawJson = JSON.stringify(attemptHistory);
+        const encodedData = btoa(unescape(encodeURIComponent(rawJson))); 
+        document.getElementById('submission-code').innerText = encodedData;
+    }
+
+    function finishTest() {
+        saveAndGenerateCode();
+        switchView('completion-view');
+    }
+
+    function forceSubmitTest() {
+        if (selectedOptionIndex === null && currentQ < questions.length) {
+            currentAttemptData.push({
+                qNum: currentQ + 1,
+                answer: "BLANK",
+                status: "FAIL (TIME UP)",
+                time: Math.round((Date.now() - questionStartTime) / 1000)
+            });
+        }
+        document.getElementById('end-title').innerText = "⏰ TIME IS UP!";
+        document.getElementById('end-title').style.color = "var(--danger)";
+        document.getElementById('end-msg').innerText = "The 70s/Q limit was breached. Copy the code for your teacher.";
+        saveAndGenerateCode();
+        switchView('completion-view');
+    }
+
+    function copyCode() {
+        const codeText = document.getElementById('submission-code').innerText;
+        navigator.clipboard.writeText(codeText).then(() => {
+            alert("✅ Secure Base64 code copied! Send to Teacher Portal.");
+        });
+    }
+
+    function openTeacherPortal() {
+        const pass = prompt("Enter Teacher Password (leave blank):");
+        if(pass !== null) switchView('teacher-view');
+    }
+
+    function returnToQuiz() {
+        switchView('quiz-view');
+    }
+
+    function clearStudentHistory() {
+        if(confirm("⚠️ WARNING: Delete Alina's local attempt history for Day 8-D?")) {
+            localStorage.removeItem('alina_day8d_history');
+            alert("History wiped. Next run will be Attempt 1.");
+            location.reload();
+        }
+    }
+
+    function decodeData() {
+        const inputCode = document.getElementById('teacher-code-input').value.trim();
+        const dashboard = document.getElementById('teacher-dashboard');
+        dashboard.innerHTML = ''; 
+
+        try {
+            const decodedJson = decodeURIComponent(escape(atob(inputCode)));
+            const historyArray = JSON.parse(decodedJson);
+            
+            if (!Array.isArray(historyArray)) throw new Error("Not an array");
+
+            historyArray.forEach(attempt => {
+                let htmlRows = '';
+                let totalTime = 0;
+                let correctCount = 0;
+
+                attempt.data.forEach(item => {
+                    totalTime += item.time;
+                    if(item.status === 'PASS') correctCount++;
+                    
+                    const statusClass = item.status === 'PASS' ? 'pass' : 'fail';
+                    htmlRows += `<tr>
+                        <td>${item.qNum}</td>
+                        <td>${item.answer}</td>
+                        <td class="${statusClass}">${item.status}</td>
+                        <td>${item.time}s</td>
+                    </tr>`;
+                });
+
+                const avgTime = attempt.data.length > 0 ? Math.round(totalTime / attempt.data.length) : 0;
+                const accuracy = attempt.data.length > 0 ? Math.round((correctCount / attempt.data.length) * 100) : 0;
+                
+                const isSuspect = attempt.attemptNum > 1 && avgTime < 15;
+                const headerClass = isSuspect ? 'attempt-header suspect' : 'attempt-header';
+                const warningMsg = isSuspect ? ` ⚠️ (Suspect: Avg time ${avgTime}s indicates memory-clicking)` : '';
+
+                const blockHtml = `
+                    <div class="attempt-block">
+                        <div class="${headerClass}">
+                            <span>Attempt #${attempt.attemptNum} ${warningMsg}</span>
+                            <span>${attempt.timestamp}</span>
+                        </div>
+                        <div style="padding: 15px; background: #fafafa; display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px solid #d2d2d2;">
+                            <span>Score: ${correctCount} / ${attempt.data.length} (${accuracy}%)</span>
+                            <span>Active Time: ${Math.floor(totalTime/60)}m ${totalTime%60}s</span>
+                            <span>Avg Time/Question: ${avgTime}s (Target Pace: <70s)</span>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Q#</th>
+                                    <th>Student Answer</th>
+                                    <th>Status</th>
+                                    <th>Time Spent (s)</th>
+                                </tr>
+                            </thead>
+                            <tbody>${htmlRows}</tbody>
+                        </table>
+                    </div>
+                `;
+                dashboard.innerHTML += blockHtml;
+            });
+            
+            dashboard.style.display = 'block';
+
+        } catch (e) {
+            alert("❌ Invalid Code! Ensure you copied the entire string.");
+            console.error(e);
+        }
+    }
+
+    loadQuestion(0);
+    startTimer();
+</script>
+</body>
+</html>
